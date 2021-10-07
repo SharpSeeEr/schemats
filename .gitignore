@@ -1,4 +1,7 @@
 # Created by .ignore support plugin (hsz.mobi)
+
+dist/
+
 ### Node template
 # Logs
 logs
@@ -336,7 +339,8 @@ paket-files/
 .idea/
 *.sln.iml
 
-*.js
+src/**/*.js
+test/**/*.js
 typings/
 *.d.ts
 test/actual/*

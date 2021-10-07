@@ -1,19 +1,24 @@
 {
-    "compilerOptions": {
-        "module": "commonjs",
-        "target": "es5",
-        "lib": ["es2015"],
-        "noImplicitAny": true,
-        "declaration": true,
-        "strictNullChecks": true,
-        "newLine": "LF",
-        "sourceMap": true
-    },
-    "exclude": [
-        "node_modules",
-        "dts",
-        "test/actual",
-        "test/expected",
-        "test/fixture"
-    ]
+  "compilerOptions": {
+    "module": "CommonJS",
+    "target": "ES2015",
+    "lib": [
+      "ES2015"
+    ],
+    "esModuleInterop": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "declaration": true,
+    "newLine": "LF",
+    "sourceMap": true,
+    "outDir": "dist",
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "dts",
+    "test/actual",
+    "test/expected",
+    "test/fixture"
+  ],
 }

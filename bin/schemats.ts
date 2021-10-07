@@ -4,74 +4,101 @@
  * Created by xiamx on 2016-08-10.
  */
 
-import * as yargs from 'yargs'
+import yargs from 'yargs'
 import * as fs from 'fs'
-import { typescriptOfSchema, getDatabase } from '../src/index'
-import Options from '../src/options'
+import { typescriptOfSchema } from '../src/index'
+import { OptionValues } from '../src/options'
 
-interface SchematsConfig {
-    conn: string,
-    table: string[] | string,
-    schema: string,
-    output: string,
-    camelCase: boolean,
-    noHeader: boolean,
+interface SchematsArguments {
+  conn: string;
+  table: string[];
+  schema: string;
+  output: string;
+  noHeader: boolean;
+  camelCase: boolean;
+  singular: boolean;
+  meta: boolean;
 }
 
-let argv: SchematsConfig = yargs
-    .usage('Usage: $0 <command> [options]')
-    .global('config')
-    .default('config', 'schemats.json')
-    .config()
-    .env('SCHEMATS')
-    .command('generate', 'generate type definition')
-    .demand(1)
-    // tslint:disable-next-line
-    .example('$0 generate -c postgres://username:password@localhost/db -t table1 -t table2 -s schema -o interface_output.ts', 'generate typescript interfaces from schema')
-    .demand('c')
-    .alias('c', 'conn')
-    .nargs('c', 1)
-    .describe('c', 'database connection string')
-    .alias('t', 'table')
-    .nargs('t', 1)
-    .describe('t', 'table name')
-    .alias('s', 'schema')
-    .nargs('s', 1)
-    .describe('s', 'schema name')
-    .alias('C', 'camelCase')
-    .describe('C', 'Camel-case columns')
-    .describe('noHeader', 'Do not write header')
-    .demand('o')
-    .nargs('o', 1)
-    .alias('o', 'output')
-    .describe('o', 'output file name')
-    .help('h')
-    .alias('h', 'help')
-    .argv;
+const yargsOptions: { [key: string]: yargs.Options } = {
+  conn: {
+    alias: 'c',
+    description: 'database connection string',
+    demandOption: true,
+    requiresArg: true,
+    nargs: 1,
+  },
+  table: {
+    alias: 't',
+    description: 'table name',
+    array: true,
+    requiresArg: true,
+  },
+  schema: {
+    alias: 's',
+    description: 'schema name',
+  },
+  camelCase: {
+    alias: 'C',
+    description: 'convert table and column names to camel case',
+    boolean: true,
+  },
+  singular: {
+    description: 'convert table names from plural to singular',
+    boolean: true,
+  },
+  meta: {
+    alias: 'm',
+    description: 'create meta-info objects for tables describing indexes and database types',
+    boolean: true,
+  },
+  noHeader: {
+    alias: 'no-header',
+    description: 'Do not write header',
+    boolean: true,
+    default: false,
+  },
+  output: {
+    alias: 'o',
+    description: 'output filename',
+    type: 'string',
+  },
+}
 
-(async () => {
+const argv = yargs(process.argv.slice(2))
+  .usage('Usage: $0 <command> [options]')
+  .global('config')
+  .default('config', 'schemats.json')
+  .config()
+  .env('SCHEMATS')
+  .command('generate', 'generate type definition')
+  .demandCommand(1)
+  .example(
+    '$0 generate -c postgres://username:password@localhost/db -t table1 -t table2 -s schema -o interface_output.ts',
+    'generate typescript interfaces from schema',
+  )
+  .help()
+  .options(yargsOptions)
+  .argv as unknown as SchematsArguments
 
-    try {
-        if (!Array.isArray(argv.table)) {
-            if (!argv.table) {
-                argv.table = []
-            } else {
-                argv.table = [argv.table]
-            }
-        }
+console.log(argv)
 
-        let formattedOutput = await typescriptOfSchema(
-            argv.conn, argv.table, argv.schema, { camelCase: argv.camelCase, writeHeader: !argv.noHeader })
-        fs.writeFileSync(argv.output, formattedOutput)
+const options: OptionValues = {
+  writeHeader: !argv.noHeader || true,
+  camelCase: argv.camelCase || false,
+  singularTableNames: argv.singular || false,
+  meta: argv.meta || false,
+}
 
-    } catch (e) {
-        console.error(e)
-        process.exit(1)
-    }
-
-})().then(() => {
-    process.exit()
-}).catch((e: any) => {
-    console.warn(e)
-    process.exit(1)
+typescriptOfSchema(
+  argv.conn,
+  argv.table,
+  argv.schema,
+  options,
+).then((formattedOutput) => {
+  fs.writeFileSync(argv.output, formattedOutput)
+  process.exit(0)
+}).catch((e) => {
+  console.error(e)
+  process.exit(1)
 })
